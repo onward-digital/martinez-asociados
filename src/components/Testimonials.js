@@ -1,15 +1,15 @@
 'use client';
 
 import { useLanguage } from '@/context/LanguageContext';
-import { Quote } from 'lucide-react';
+import { Quote, Star } from 'lucide-react';
 
 export default function Testimonials() {
   const { t } = useLanguage();
 
   const testimonials = [
-    { text: t('test_1_text'), name: t('test_1_name'), role: t('test_1_role') },
-    { text: t('test_2_text'), name: t('test_2_name'), role: t('test_2_role') },
-    { text: t('test_3_text'), name: t('test_3_name'), role: t('test_3_role') },
+    { text: t('test_1_text'), name: t('test_1_name'), role: t('test_1_role'), initials: 'CM', color: '#c9a96e' },
+    { text: t('test_2_text'), name: t('test_2_name'), role: t('test_2_role'), initials: 'MR', color: '#818cf8' },
+    { text: t('test_3_text'), name: t('test_3_name'), role: t('test_3_role'), initials: 'RC', color: '#34d399' },
   ];
 
   return (
@@ -37,23 +37,47 @@ export default function Testimonials() {
             <div key={i} className="card-elegant" style={{
               padding: '2.25rem', display: 'flex', flexDirection: 'column',
             }}>
-              <Quote size={28} style={{ color: 'var(--color-accent)', opacity: 0.4, marginBottom: '1.25rem' }} />
+              {/* Stars */}
+              <div style={{ display: 'flex', gap: '2px', marginBottom: '1.25rem' }}>
+                {[...Array(5)].map((_, j) => (
+                  <Star key={j} size={14} fill="var(--color-accent)" style={{ color: 'var(--color-accent)' }} />
+                ))}
+              </div>
+
               <p style={{
                 fontFamily: 'var(--font-body)', fontSize: '0.95rem',
                 color: 'var(--color-text-secondary)', lineHeight: 1.8,
                 marginBottom: '1.75rem', flex: 1, fontWeight: 300, fontStyle: 'italic',
               }}>
-                "{item.text}"
+                &ldquo;{item.text}&rdquo;
               </p>
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem' }}>
+
+              <div style={{
+                borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem',
+                display: 'flex', alignItems: 'center', gap: '1rem',
+              }}>
+                {/* Avatar */}
                 <div style={{
+                  width: '44px', height: '44px', borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${item.color}25, ${item.color}10)`,
+                  border: `1.5px solid ${item.color}35`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                   fontFamily: 'var(--font-display)', fontWeight: 600,
-                  fontSize: '1rem', marginBottom: '0.2rem',
-                }}>{item.name}</div>
-                <div style={{
-                  fontFamily: 'var(--font-body)', fontSize: '0.8rem',
-                  color: 'var(--color-accent)', fontWeight: 400,
-                }}>{item.role}</div>
+                  fontSize: '0.85rem', color: item.color,
+                }}>
+                  {item.initials}
+                </div>
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontWeight: 600,
+                    fontSize: '1rem', marginBottom: '0.2rem',
+                  }}>{item.name}</div>
+                  <div style={{
+                    fontFamily: 'var(--font-body)', fontSize: '0.8rem',
+                    color: 'var(--color-accent)', fontWeight: 400,
+                  }}>{item.role}</div>
+                </div>
               </div>
             </div>
           ))}
