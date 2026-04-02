@@ -3,9 +3,22 @@
 import { useLanguage } from '@/context/LanguageContext';
 import { Linkedin, Mail } from 'lucide-react';
 import { useState } from 'react';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
+import { useScrollReveal, fadeInUp, fadeIn, staggerContainer } from '@/hooks/useScrollAnimation';
+
+const cardVariant = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1, y: 0,
+    transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 export default function Team() {
   const { t } = useLanguage();
+  const { ref: headerRef, inView: headerInView } = useScrollReveal();
+  const { ref: gridRef, inView: gridInView } = useScrollReveal();
 
   const team = [
     {
@@ -34,31 +47,43 @@ export default function Team() {
     <section id="equipo" className="section-padding">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <span style={{
+        <motion.div
+          ref={headerRef}
+          variants={staggerContainer}
+          initial="hidden"
+          animate={headerInView ? 'visible' : 'hidden'}
+          style={{ textAlign: 'center', marginBottom: '4rem' }}
+        >
+          <motion.span variants={fadeIn} style={{
             fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-accent)',
             letterSpacing: '0.2em', display: 'block', marginBottom: '1rem',
-          }}>{t('team_tag')}</span>
-          <div className="gold-line-center" style={{ marginBottom: '1.5rem' }} />
-          <h2 style={{
+          }}>{t('team_tag')}</motion.span>
+          <motion.div variants={fadeIn} className="gold-line-center" style={{ marginBottom: '1.5rem' }} />
+          <motion.h2 variants={fadeInUp} style={{
             fontFamily: 'var(--font-display)', fontWeight: 700,
             fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', marginBottom: '1rem',
-          }}>{t('team_title')}</h2>
-          <p style={{
+          }}>{t('team_title')}</motion.h2>
+          <motion.p variants={fadeInUp} style={{
             fontFamily: 'var(--font-body)', fontSize: '1rem', color: 'var(--color-text-secondary)',
             maxWidth: '550px', margin: '0 auto', lineHeight: 1.7, fontWeight: 300,
-          }}>{t('team_subtitle')}</p>
-        </div>
+          }}>{t('team_subtitle')}</motion.p>
+        </motion.div>
 
-        {/* Team Grid */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '1.5rem',
-        }}>
+        {/* Grid */}
+        <motion.div
+          ref={gridRef}
+          variants={staggerContainer}
+          initial="hidden"
+          animate={gridInView ? 'visible' : 'hidden'}
+          style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '1.5rem',
+          }}
+        >
           {team.map((member, i) => (
             <TeamCard key={i} member={member} />
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -66,31 +91,68 @@ export default function Team() {
 
 function TeamCard({ member }) {
   const [imgError, setImgError] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const cardRef = useRef(null);
+  const inView = useInView(cardRef, { once: true, margin: '-60px' });
 
   return (
-    <div className="card-elegant" style={{
-      padding: '2.25rem 1.75rem', textAlign: 'center',
-    }}>
-      {/* Avatar with photo */}
+    <motion.div
+      ref={cardRef}
+      variants={cardVariant}
+      data-cursor="card"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        background: 'var(--color-bg-card)',
+        border: `1px solid ${hovered ? 'rgba(201,169,110,0.4)' : 'var(--color-border)'}`,
+        borderRadius: '12px',
+        padding: '2.25rem 1.75rem', textAlign: 'center',
+        cursor: 'pointer',
+        transition: 'border-color 0.4s ease, box-shadow 0.4s ease',
+        boxShadow: hovered ? '0 20px 50px rgba(0,0,0,0.3), 0 0 30px rgba(201,169,110,0.08)' : 'none',
+      }}
+    >
+      {/* Avatar with photo reveal */}
       <div style={{
         width: '100px', height: '100px', borderRadius: '50%',
-        border: `2px solid ${member.color}40`,
+        border: `2px solid ${hovered ? member.color : member.color + '40'}`,
         margin: '0 auto 1.5rem',
         overflow: 'hidden',
         background: `linear-gradient(135deg, ${member.color}20, ${member.color}08)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: `0 8px 25px ${member.color}15`,
+        position: 'relative',
+        transition: 'border-color 0.4s ease',
       }}>
         {!imgError ? (
-          <img
-            src={member.photo}
-            alt={member.name}
-            onError={() => setImgError(true)}
-            style={{
-              width: '100%', height: '100%', objectFit: 'cover',
-              filter: 'grayscale(30%) contrast(1.05)',
-            }}
-          />
+          <>
+            <motion.img
+              src={member.photo}
+              alt={member.name}
+              onError={() => setImgError(true)}
+              animate={{
+                scale: hovered ? 1.05 : 1,
+                filter: hovered
+                  ? 'grayscale(0%) contrast(1.05)'
+                  : 'grayscale(30%) contrast(1.05)',
+              }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            {/* Photo reveal curtain */}
+            <motion.div
+              initial={{ x: 0 }}
+              animate={inView ? { x: '105%' } : { x: 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              style={{
+                position: 'absolute', inset: 0,
+                background: 'var(--color-accent)',
+                zIndex: 2,
+              }}
+            />
+          </>
         ) : (
           <span style={{
             fontFamily: 'var(--font-display)', fontWeight: 700,
@@ -112,9 +174,13 @@ function TeamCard({ member }) {
         color: 'var(--color-text-secondary)', marginBottom: '1.5rem', fontWeight: 300,
       }}>{member.spec}</div>
 
-      {/* Social */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-        {[<Linkedin size={16} />, <Mail size={16} />].map((icon, j) => (
+      {/* Social — fade in on hover */}
+      <motion.div
+        animate={{ opacity: hovered ? 1 : 0.55 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
+      >
+        {[<Linkedin key="li" size={16} />, <Mail key="mail" size={16} />].map((icon, j) => (
           <a key={j} href="#" style={{
             width: '36px', height: '36px', borderRadius: '6px',
             border: '1px solid var(--color-border)',
@@ -126,7 +192,7 @@ function TeamCard({ member }) {
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
           >{icon}</a>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
