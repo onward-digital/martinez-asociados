@@ -8,29 +8,50 @@ export default function Navbar() {
   const { lang, t, toggleLang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('inicio');
 
+  // Scroll → solid bg
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Intersection Observer → active section
+  useEffect(() => {
+    const sections = ['inicio', 'areas', 'equipo', 'testimonios', 'contacto'];
+    const observers = [];
+
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { threshold: 0.35 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
   const links = [
-    { href: '#inicio', label: t('nav_inicio') },
-    { href: '#areas', label: t('nav_areas') },
-    { href: '#equipo', label: t('nav_equipo') },
-    { href: '#testimonios', label: t('nav_testimonios') },
-    { href: '#contacto', label: t('nav_contacto') },
+    { href: '#inicio', label: t('nav_inicio'), id: 'inicio' },
+    { href: '#areas', label: t('nav_areas'), id: 'areas' },
+    { href: '#equipo', label: t('nav_equipo'), id: 'equipo' },
+    { href: '#testimonios', label: t('nav_testimonios'), id: 'testimonios' },
+    { href: '#contacto', label: t('nav_contacto'), id: 'contacto' },
   ];
 
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
       padding: scrolled ? '0.6rem 1.5rem' : '1.1rem 1.5rem',
-      background: scrolled ? 'rgba(12, 15, 20, 0.95)' : 'transparent',
-      backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? '1px solid var(--color-border)' : '1px solid transparent',
-      transition: 'all 0.4s ease',
+      background: scrolled ? 'rgba(12, 15, 20, 0.92)' : 'transparent',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: scrolled ? '1px solid rgba(201, 169, 110, 0.1)' : '1px solid transparent',
+      transition: 'all 0.3s ease',
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Logo */}
@@ -48,16 +69,23 @@ export default function Navbar() {
 
         {/* Desktop */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
-          {links.map((link) => (
-            <a key={link.href} href={link.href} style={{
-              textDecoration: 'none', color: 'var(--color-text-secondary)',
-              fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 500,
-              transition: 'color 0.3s', letterSpacing: '0.02em',
-            }}
-              onMouseEnter={(e) => e.target.style.color = 'var(--color-accent)'}
-              onMouseLeave={(e) => e.target.style.color = 'var(--color-text-secondary)'}
-            >{link.label}</a>
-          ))}
+          {links.map((link) => {
+            const isActive = activeSection === link.id;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                style={{
+                  textDecoration: 'none',
+                  color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                  fontFamily: 'var(--font-body)', fontSize: '0.85rem', fontWeight: 500,
+                  transition: 'color 0.3s', letterSpacing: '0.02em',
+                  position: 'relative', paddingBottom: '2px',
+                }}
+                className="nav-link"
+              >{link.label}</a>
+            );
+          })}
           <button onClick={toggleLang} style={{
             display: 'flex', alignItems: 'center', gap: '0.35rem',
             background: 'transparent', border: '1px solid var(--color-border)',
@@ -75,7 +103,7 @@ export default function Navbar() {
           </a>
         </div>
 
-        {/* Mobile */}
+        {/* Mobile hamburger */}
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}
           style={{ background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer' }}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -91,7 +119,12 @@ export default function Navbar() {
         }} className="md:hidden">
           {links.map((link) => (
             <a key={link.href} href={link.href} onClick={() => setIsOpen(false)}
-              style={{ textDecoration: 'none', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', fontSize: '1rem', padding: '0.5rem 0' }}>
+              style={{
+                textDecoration: 'none',
+                color: activeSection === link.id ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                fontFamily: 'var(--font-body)', fontSize: '1rem', padding: '0.5rem 0',
+                transition: 'color 0.3s',
+              }}>
               {link.label}
             </a>
           ))}
